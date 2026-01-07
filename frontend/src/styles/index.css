@@ -1,0 +1,240 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --background: 0 0% 0%;
+        --foreground: 0 0% 100%;
+
+        /* DARK RED THEME - Black, White, and Dark Red */
+        --primary: 0 100% 27%;
+        /* #8B0000 - Dark Red */
+        --primary-foreground: 0 0% 100%;
+
+        --card: 0 0% 3%;
+        --card-foreground: 0 0% 100%;
+
+        --popover: 0 0% 3%;
+        --popover-foreground: 0 0% 100%;
+
+        --secondary: 0 0% 10%;
+        --secondary-foreground: 0 0% 100%;
+
+        --muted: 0 0% 10%;
+        --muted-foreground: 0 0% 60%;
+
+        --accent: 0 0% 10%;
+        --accent-foreground: 0 0% 100%;
+
+        --destructive: 0 100% 50%;
+        --destructive-foreground: 0 0% 100%;
+
+        --border: 0 0% 15%;
+        --input: 0 0% 15%;
+        --ring: 0 100% 27%;
+        /* Dark Red to match primary */
+
+        --radius: 0.5rem;
+    }
+
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-black text-foreground antialiased;
+        font-feature-settings: "rlig" 1, "calt" 1;
+    }
+}
+
+@layer utilities {
+    .font-rajdhani {
+        font-family: 'Rajdhani', sans-serif;
+    }
+
+    .text-glow {
+        text-shadow: 0 0 10px rgba(139, 0, 0, 0.5), 0 0 20px rgba(139, 0, 0, 0.3);
+    }
+
+    .clip-path-slant {
+        clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
+    }
+
+    .mask-image-radial {
+        mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+    }
+
+    .mask-image-right {
+        mask-image: linear-gradient(to right, black 80%, transparent 100%);
+    }
+
+    /* Hide Scrollbar */
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .animate-float {
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .hero-img-anim {
+        will-change: transform;
+    }
+
+    .animation-scale-in {
+        animation: scale-in-center 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Accordion animations */
+    @keyframes accordion-down {
+        from {
+            height: 0;
+        }
+
+        to {
+            height: var(--radix-accordion-content-height);
+        }
+    }
+
+    @keyframes accordion-up {
+        from {
+            height: var(--radix-accordion-content-height);
+        }
+
+        to {
+            height: 0;
+        }
+    }
+
+    .animate-accordion-down {
+        animation: accordion-down 0.2s ease-out;
+    }
+
+    .animate-accordion-up {
+        animation: accordion-up 0.2s ease-out;
+    }
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0) translateX(0);
+        opacity: 0.3;
+    }
+
+    50% {
+        transform: translateY(-100px) translateX(50px);
+        opacity: 0.8;
+    }
+}
+
+@keyframes scroll-up {
+    0% {
+        transform: translateY(0);
+    }
+
+    100% {
+        transform: translateY(-50%);
+    }
+}
+
+@keyframes scroll-down {
+    0% {
+        transform: translateY(-50%);
+    }
+
+    100% {
+        transform: translateY(0);
+    }
+}
+
+@keyframes scale-in-center {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.1);
+        /* Match the scale-110 logic */
+    }
+}
+
+@layer utilities {
+    .animate-pulse-fast {
+        animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .animate-scroll-up {
+        animation: scroll-up 40s linear infinite;
+    }
+
+    .animate-scroll-down {
+        animation: scroll-down 40s linear infinite;
+    }
+
+    .animate-float {
+        animation: float 8s ease-in-out infinite;
+    }
+}
+
+/* Force Navbar Center */
+.header-container-center {
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+/* Landing Page Animations */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.animate-slideUp {
+    animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fadeIn {
+    animation: fadeIn 1s ease-out forwards;
+}
+
+.animate-fadeInRight {
+    animation: fadeInRight 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
