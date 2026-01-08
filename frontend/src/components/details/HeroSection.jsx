@@ -6,13 +6,13 @@ const HeroSection = memo(({ media, backdropUrl, logoUrl, onPlay, onAddToList, on
   const releaseYear = new Date(media.release_date || media.first_air_date || media.releaseDate).getFullYear() || 'N/A'
   const [logoLoaded, setLogoLoaded] = useState(false)
   const [logoError, setLogoError] = useState(false)
-  
+
   // Reset state when logoUrl changes
   useEffect(() => {
     setLogoLoaded(false)
     setLogoError(false)
   }, [logoUrl])
-  
+
   // Timeout to show title if logo takes too long to load (3 seconds)
   useEffect(() => {
     if (logoUrl && !logoLoaded && !logoError) {
@@ -24,9 +24,9 @@ const HeroSection = memo(({ media, backdropUrl, logoUrl, onPlay, onAddToList, on
       return () => clearTimeout(timeout)
     }
   }, [logoUrl, logoLoaded, logoError])
-  
+
   return (
-    <section className="relative h-[60vh] sm:h-[70vh] md:h-[85vh] w-full overflow-hidden">
+    <section className="relative h-[85vh] sm:h-[70vh] md:h-[85vh] min-h-[600px] sm:min-h-0 w-full overflow-hidden">
       {/* Background Image */}
       <img
         src={backdropUrl}
@@ -46,12 +46,11 @@ const HeroSection = memo(({ media, backdropUrl, logoUrl, onPlay, onAddToList, on
             {logoUrl ? (
               <>
                 {/* Logo Image - Preload and show when ready */}
-                <img 
-                  src={logoUrl} 
+                <img
+                  src={logoUrl}
                   alt={media.title || media.name}
-                  className={`h-20 sm:h-28 md:h-32 lg:h-40 object-contain max-w-full sm:max-w-2xl transition-opacity duration-500 ${
-                    logoLoaded ? 'opacity-100' : 'opacity-0 absolute'
-                  }`}
+                  className={`h-16 sm:h-24 md:h-32 lg:h-40 object-contain max-w-[80%] sm:max-w-2xl transition-opacity duration-500 ${logoLoaded ? 'opacity-100' : 'opacity-0 absolute'
+                    }`}
                   loading="eager"
                   onLoad={() => {
                     setLogoLoaded(true)
@@ -70,7 +69,7 @@ const HeroSection = memo(({ media, backdropUrl, logoUrl, onPlay, onAddToList, on
                 )}
                 {/* Loading placeholder - same size as logo to prevent layout shift */}
                 {!logoLoaded && !logoError && (
-                  <div className="h-20 sm:h-28 md:h-32 lg:h-40 w-full max-w-full sm:max-w-2xl" />
+                  <div className="h-16 sm:h-24 md:h-32 lg:h-40 w-full max-w-full sm:max-w-2xl" />
                 )}
               </>
             ) : (
@@ -81,7 +80,7 @@ const HeroSection = memo(({ media, backdropUrl, logoUrl, onPlay, onAddToList, on
           </div>
 
           {/* Description */}
-          <p className="text-zinc-300 line-clamp-2 sm:line-clamp-3 text-sm sm:text-base md:text-lg font-light leading-relaxed">
+          <p className="text-zinc-300 line-clamp-3 sm:line-clamp-4 text-sm sm:text-base md:text-lg font-medium leading-relaxed drop-shadow-md">
             {media.overview || media.description}
           </p>
 

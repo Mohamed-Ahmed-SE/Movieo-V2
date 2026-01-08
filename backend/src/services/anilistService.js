@@ -96,6 +96,8 @@ const detailsQuery = `
       }
       bannerImage
       meanScore
+      popularity
+      favourites
       episodes
       chapters
       volumes
@@ -170,14 +172,14 @@ export const anilistService = {
         .filter((item) => {
           // Filter out 18+ content
           if (item.isAdult) return false
-          
+
           // Filter out Ecchi genre
           const genres = item.genres || []
           if (genres.some(g => g.toLowerCase() === 'ecchi')) return false
-          
+
           // Filter out items without posters
           if (!item.coverImage?.large && !item.coverImage?.extraLarge) return false
-          
+
           return true
         })
         .map((item) => ({
@@ -247,6 +249,8 @@ export const anilistService = {
           : null,
         rating: data.meanScore ? data.meanScore / 10 : null,
         vote_average: data.meanScore ? data.meanScore / 10 : null,
+        popularity: data.popularity,
+        favourites: data.favourites,
         status: data.status || null,
         original_language: 'Japanese', // AniList is primarily Japanese content
         runtime: null, // AniList doesn't have runtime, use episode count instead
@@ -310,14 +314,14 @@ export const anilistService = {
         .filter((item) => {
           // Filter out 18+ content
           if (item.isAdult) return false
-          
+
           // Filter out Ecchi genre
           const genres = item.genres || []
           if (genres.some(g => g.toLowerCase() === 'ecchi')) return false
-          
+
           // Filter out items without posters
           if (!item.coverImage?.large && !item.coverImage?.extraLarge) return false
-          
+
           return true
         })
         .map((item) => ({

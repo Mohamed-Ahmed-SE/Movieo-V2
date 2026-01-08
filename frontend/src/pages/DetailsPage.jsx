@@ -55,15 +55,15 @@ const DetailsPage = memo(() => {
   useGSAP(() => {
     if (!loading && media && containerRef.current) {
       const heroImg = containerRef.current?.querySelector('.hero-img')
-      
+
       if (heroImg) {
         gsap.set(heroImg, { willChange: 'transform, opacity' })
         gsap.fromTo(heroImg,
           { scale: 1.1, opacity: 0 },
-          { 
-            scale: 1, 
-            opacity: 1, 
-            duration: 0.6, 
+          {
+            scale: 1,
+            opacity: 1,
+            duration: 0.6,
             ease: 'expo.out',
             force3D: true
           }
@@ -191,7 +191,7 @@ const DetailsPage = memo(() => {
         setLoadingEpisodes(true)
         try {
           const episodesData = await mediaService.getEpisodes(type, id, selectedSeason)
-          
+
           let episodesArray = []
           if (Array.isArray(episodesData)) {
             episodesArray = episodesData
@@ -200,7 +200,7 @@ const DetailsPage = memo(() => {
           } else if (episodesData?.data) {
             episodesArray = Array.isArray(episodesData.data) ? episodesData.data : []
           }
-          
+
           episodesArray = episodesArray.map(ep => ({
             ...ep,
             episode_number: ep.episode_number || ep.episodeNumber || 0,
@@ -208,7 +208,7 @@ const DetailsPage = memo(() => {
             name: ep.name || ep.title || `Episode ${ep.episode_number || ep.episodeNumber || 0}`,
             runtime: ep.runtime || ep.duration || null
           }))
-          
+
           setEpisodes(episodesArray)
         } catch (error) {
           console.error('Error fetching episodes:', error)
@@ -240,7 +240,7 @@ const DetailsPage = memo(() => {
         } else if (media?.number_of_chapters !== undefined && media?.number_of_chapters !== null) {
           totalChaps = media.number_of_chapters
         }
-        
+
         // Debug log to see what we're getting - always log for debugging
         console.log('Manga/Manhwa chapters data:', {
           type: media?.type || type,
@@ -256,7 +256,7 @@ const DetailsPage = memo(() => {
           allMediaKeys: media ? Object.keys(media).filter(k => k.toLowerCase().includes('chapter') || k.toLowerCase().includes('status')) : [],
           fullMedia: media // Log full media object to see what's actually there
         })
-        
+
         // Accept estimated chapters or actual chapters
         if (totalChaps && totalChaps > 0 && !isNaN(totalChaps)) {
           // Use poster/cover image as fallback for chapter images
@@ -306,7 +306,7 @@ const DetailsPage = memo(() => {
       const tmdbRecs = media?.recommendations?.results || media?.recommendations || []
       const tmdbSimilar = media?.similar?.results || media?.similar || []
       const existing = [...tmdbRecs, ...tmdbSimilar]
-      
+
       if (existing.length > 0) {
         formatted = existing
           .map(rec => {
@@ -316,7 +316,7 @@ const DetailsPage = memo(() => {
                 posterPath = `https://image.tmdb.org/t/p/w500${posterPath}`
               }
             }
-            
+
             return {
               id: rec.id,
               title: rec.title || rec.name,
@@ -339,12 +339,12 @@ const DetailsPage = memo(() => {
             .map(rel => {
               const mediaItem = rel.node || rel.media || rel
               if (!mediaItem || !mediaItem.id) return null
-              
+
               const posterUrl = mediaItem.coverImage?.large || mediaItem.coverImage?.extraLarge || mediaItem.poster || mediaItem.poster_path
               if (!posterUrl) return null
-              
+
               const backdropUrl = mediaItem.bannerImage || mediaItem.coverImage?.extraLarge || null
-              
+
               return {
                 id: mediaItem.id.toString(),
                 title: mediaItem.title?.english || mediaItem.title?.romaji || mediaItem.title?.userPreferred || mediaItem.title || mediaItem.name,
@@ -435,34 +435,34 @@ const DetailsPage = memo(() => {
 
   const backdropUrl = getImageUrl(displayBackdrop, 'original')
   const posterUrl = getImageUrl(displayPoster, 'w500')
-  
+
   // Logo URL - Try to get logo from images for all types
   const imagesData = images || media.images
   const logoFromImages = imagesData?.logos?.find(l => l.iso_639_1 === 'en') || imagesData?.logos?.[0]
-  
+
   let logoUrl = null
-  
+
   // First, try to get logo from images array (works for all types including anime from TMDB)
   if (logoFromImages?.fullPath) {
     logoUrl = logoFromImages.fullPath
   } else if (logoFromImages?.file_path) {
-    const path = logoFromImages.file_path.startsWith('/') 
-      ? logoFromImages.file_path 
+    const path = logoFromImages.file_path.startsWith('/')
+      ? logoFromImages.file_path
       : `/${logoFromImages.file_path}`
     logoUrl = `https://image.tmdb.org/t/p/original${path}`
   }
-  
+
   // Fallback to media.logo or media.logo_path if no logo in images array
   if (!logoUrl) {
     if (media.logo) {
       logoUrl = media.logo
     } else if (media.logo_path) {
-      logoUrl = media.logo_path.startsWith('http') 
-        ? media.logo_path 
+      logoUrl = media.logo_path.startsWith('http')
+        ? media.logo_path
         : `https://image.tmdb.org/t/p/original${media.logo_path.startsWith('/') ? media.logo_path : `/${media.logo_path}`}`
     }
   }
-  
+
   // If still no logo, logoUrl stays null and HeroSection will show title instead
 
   // Check if in list
@@ -498,9 +498,9 @@ const DetailsPage = memo(() => {
       {/* Main Content */}
       <div className="bg-black relative z-10 pt-8 sm:pt-12 md:pt-16 lg:pt-20">
         <div className="w-full px-3 sm:px-4 md:px-6 lg:px-16">
-          <div className="grid lg:grid-cols-12 gap-4 sm:gap-6 md:gap-8 lg:gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 md:gap-8 lg:gap-12">
             {/* Left Column */}
-            <div className="lg:col-span-8 space-y-6 sm:space-y-8 md:space-y-12 lg:space-y-16 order-2 lg:order-1">
+            <div className="lg:col-span-8 space-y-6 sm:space-y-8 md:space-y-12 lg:space-y-16">
               <AboutSection media={media} />
 
               {media.characters && media.characters.length > 0 && (
@@ -528,7 +528,7 @@ const DetailsPage = memo(() => {
                   id={id}
                   selectedSeason={1}
                   seasons={[]}
-                  onSeasonChange={() => {}}
+                  onSeasonChange={() => { }}
                   totalEpisodes={media.totalEpisodes || media.episodes}
                   showAllLimit={20}
                 />
@@ -542,7 +542,7 @@ const DetailsPage = memo(() => {
                   id={id}
                   selectedSeason={1}
                   seasons={[]}
-                  onSeasonChange={() => {}}
+                  onSeasonChange={() => { }}
                   isChapters={true}
                   totalChapters={media.totalChapters || media.chapters}
                   showAllLimit={20}
@@ -572,7 +572,7 @@ const DetailsPage = memo(() => {
             </div>
 
             {/* Right Column - Sidebar */}
-            <div className="lg:col-span-4 order-1 lg:order-2 mb-6 lg:mb-0">
+            <div className="lg:col-span-4 mb-6 lg:mb-0">
               <SidebarInfo media={media} posterUrl={posterUrl} />
             </div>
           </div>
@@ -585,10 +585,10 @@ const DetailsPage = memo(() => {
         trailerKey={trailerKey}
         onClose={() => setShowTrailer(false)}
       />
-      <MediaCardModal 
-        open={modalOpen} 
-        onOpenChange={setModalOpen} 
-        media={{ ...media, type: media.type || type }} 
+      <MediaCardModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        media={{ ...media, type: media.type || type }}
       />
       <ImageCustomizerModal
         open={customizerOpen}

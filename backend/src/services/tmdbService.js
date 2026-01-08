@@ -79,6 +79,7 @@ export const tmdbService = {
         release_date: data.release_date || null,
         first_air_date: data.first_air_date || null,
         rating: data.vote_average,
+        vote_count: data.vote_count,
         runtime: data.runtime || data.episode_run_time?.[0] || null,
         original_language: data.original_language || null,
         status: data.status || null,
