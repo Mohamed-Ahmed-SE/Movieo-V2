@@ -72,14 +72,20 @@ A modern, full-stack application for tracking and managing movies, TV shows, ani
 
 #### UI/UX Improvements
 - ✨ **Landing Page**: Fully responsive with improved GSAP animations, dynamic genre posters, Radix/Lucide icons
-- 📱 **Mobile Navigation**: Redesigned navbar with hamburger menu for mobile/tablet devices
-- 🎨 **Home Screen**: Added 3 new creative sections (Featured Spotlight, Bento Grid, Trending Grid)
+- 📱 **Mobile Responsiveness**:
+  - **Details Page**: Optimized layout with main content first, improved hero visibility, and proper stacking
+  - **Navigation**: Redesigned navbar with hamburger menu for mobile/tablet devices
+  - **Touch Friendly**: Optimized touch targets and scrolling experiences
+- 🎨 **Modern Design**:
+  - **Glassmorphism**: Enhanced UI with frosted glass effects in About and Info sections
+  - **Rich Iconography**: Integration of Lucide icons for better visual hierarchy
+  - **Home Screen**: Added 3 new creative sections (Featured Spotlight, Bento Grid, Trending Grid)
 - 📰 **News Section**: Modernized design with update button and improved responsiveness
 - 🔍 **Explore Page**: Complete redesign with cleaner, more modern layout
 - 📋 **Watchlist**: Fully responsive with mobile-friendly horizontal scrollable filters
 - ⚙️ **Settings Page**: New options (Theme, Auto-play, Adult Content, Notifications) with apply/unapply functionality
 - 🔎 **Search**: Fuzzy search implementation with better matching and relevance sorting
-- 📄 **Details Page**: Fixed logo loading, redesigned sections, improved recommendations
+- 📄 **Details Page**: Complete overhaul with glassmorphism layout, responsive grid, dynamic ratings/votes, and restored hero logo
 - 👤 **Profile Page**: Modernized design with better layout and card-based sections
 
 #### Performance Optimizations
@@ -193,7 +199,7 @@ Create `backend/.env`:
 
 ```env
 # Server Configuration
-PORT=5000
+PORT=5001
 NODE_ENV=development
 
 # Database
@@ -224,7 +230,7 @@ GITHUB_CALLBACK_URL=http://localhost:5000/api/auth/github/callback
 Create `frontend/.env` (optional, defaults are usually fine):
 
 ```env
-VITE_API_URL=http://localhost:5000
+VITE_API_URL=http://localhost:5001
 ```
 
 5. **Start MongoDB**
@@ -252,7 +258,7 @@ cd backend
 npm run dev
 ```
 
-The backend will run on `http://localhost:5000`
+The backend will run on `http://localhost:5001`
 
 7. **Start the frontend development server**
 
@@ -403,7 +409,7 @@ Movieo V2/
 ### Base URL
 
 ```
-Development: http://localhost:5000/api
+Development: http://localhost:5001/api
 Production: https://your-domain.com/api
 ```
 
