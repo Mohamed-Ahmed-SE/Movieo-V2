@@ -31,25 +31,30 @@ export const getRealMediaType = (item) => {
   // Get language information - check multiple sources
   const lang = item.original_language || item.originalLanguage
   const spokenLanguages = item.spoken_languages || item.spokenLanguages || []
-  const isJapanese = lang === 'ja' || 
-    (Array.isArray(spokenLanguages) && spokenLanguages.some(l => 
+  const isJapanese = lang === 'ja' ||
+    (Array.isArray(spokenLanguages) && spokenLanguages.some(l =>
       (typeof l === 'string' ? l === 'ja' : (l.iso_639_1 === 'ja' || l.code === 'ja'))
     ))
 
   // Anime Detection: ONLY TV Series + Japanese Language (NOT movies)
-  // Movies with Japanese language remain as movies (already handled above)
-  if (type === 'tv' && isJapanese) {
+  // Strict rule: Any TV series with Japanese language/origin is Anime
+  const origin = item.origin_country || item.countryOfOrigin || []
+  const isJapaneseTV = type === 'tv' && (
+    isJapanese ||
+    (Array.isArray(origin) ? origin.includes('JP') : origin === 'JP')
+  )
+
+  if (isJapaneseTV) {
     type = 'anime'
   }
 
   // Manhwa Detection: Manga + (Korean Language OR Origin Country KR)
-  const origin = item.origin_country || item.countryOfOrigin || []
-  const isKorean = lang === 'ko' || 
-    (Array.isArray(spokenLanguages) && spokenLanguages.some(l => 
+  const isKorean = lang === 'ko' ||
+    (Array.isArray(spokenLanguages) && spokenLanguages.some(l =>
       (typeof l === 'string' ? l === 'ko' : (l.iso_639_1 === 'ko' || l.code === 'ko'))
     )) ||
     (Array.isArray(origin) ? origin.includes('KR') : origin === 'KR')
-  
+
   // Only convert manga to manhwa if it's Korean, not if it's already manhwa
   if (type === 'manga' && isKorean) {
     type = 'manhwa'
@@ -68,18 +73,18 @@ export const normalizeMediaItem = (item) => {
 
   // Get description from multiple sources (important for anime from AniList)
   // Try multiple sources - AniList uses 'description' field with HTML
-  let description = item.overview || 
-    item.description || 
+  let description = item.overview ||
+    item.description ||
     item.entry?.description ||
     item.entry?.descriptionHtml ||
     null
-  
+
   // Strip HTML tags if description exists and is a string
   if (description && typeof description === 'string') {
     // Remove HTML tags and clean up
     description = description.replace(/<[^>]+>/g, '').replace(/\n\s*\n/g, '\n').trim()
   }
-  
+
   // Fallback if no description found
   if (!description || description === '') {
     description = 'No description available.'

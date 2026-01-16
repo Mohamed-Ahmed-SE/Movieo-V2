@@ -90,26 +90,17 @@ const Search = memo(() => {
     if (!text || !query) return false
     const normalizedText = text.toLowerCase().trim()
     const normalizedQuery = query.toLowerCase().trim()
-    
+
     // Exact match
     if (normalizedText === normalizedQuery) return true
-    
+
     // Contains match
     if (normalizedText.includes(normalizedQuery)) return true
-    
+
     // Word boundary match (matches if query is at start of any word)
     const words = normalizedText.split(/\s+/)
     if (words.some(word => word.startsWith(normalizedQuery))) return true
-    
-    // Character sequence match (fuzzy - checks if query chars appear in order)
-    let queryIndex = 0
-    for (let i = 0; i < normalizedText.length && queryIndex < normalizedQuery.length; i++) {
-      if (normalizedText[i] === normalizedQuery[queryIndex]) {
-        queryIndex++
-      }
-    }
-    if (queryIndex === normalizedQuery.length) return true
-    
+
     return false
   }
 
@@ -121,6 +112,19 @@ const Search = memo(() => {
 
     setLoading(true)
     try {
+      // Prepare filter object for backend
+      const typeMap = {
+        'anime': 'anime',
+        'movie': 'movie',
+        'manga': 'manga',
+        'series': 'tv'
+      }
+
+      const searchFilters = {}
+      if (filterType !== 'all' && typeMap[filterType]) {
+        searchFilters.type = typeMap[filterType]
+      }
+
       // Try multiple search variations for better results
       const searchVariations = [
         searchQuery,
@@ -128,17 +132,17 @@ const Search = memo(() => {
         // Add variations if query is short
         ...(searchQuery.length <= 3 ? [] : [searchQuery + '*'])
       ]
-      
-      // Search with the main query
-      let response = await mediaService.search(searchQuery)
-      
+
+      // Search with the main query and filters
+      let response = await mediaService.search(searchQuery, searchFilters)
+
       // If results are few, try without some words (for longer queries)
       if (response.length < 5 && searchQuery.split(' ').length > 2) {
         const words = searchQuery.split(' ')
         const shorterQuery = words.slice(0, -1).join(' ')
         if (shorterQuery.trim()) {
           try {
-            const additionalResults = await mediaService.search(shorterQuery)
+            const additionalResults = await mediaService.search(shorterQuery, searchFilters)
             // Merge and deduplicate
             const existingIds = new Set(response.map(r => r.id))
             const newResults = additionalResults.filter(r => !existingIds.has(r.id))
@@ -149,42 +153,21 @@ const Search = memo(() => {
         }
       }
 
-      // Filter by type if not 'all'
-      if (filterType !== 'all') {
-        const typeMap = {
-          'anime': 'anime',
-          'movie': 'movie',
-          'manga': 'manga',
-          'series': 'tv'
-        }
-        const targetType = typeMap[filterType]
-        if (targetType) {
-          response = Array.isArray(response) ? response.filter(item => {
-            const itemType = item.type || item.media_type || item.mediaType
-            // For anime, check if it's TV with Japanese language
-            if (targetType === 'anime') {
-              return itemType === 'tv' && (item.original_language === 'ja' || item.spoken_languages?.some(lang => lang?.iso_639_1 === 'ja'))
-            }
-            return itemType === targetType
-          }) : []
-        }
-      }
-
       // Apply fuzzy matching to prioritize better matches
       const hasImage = (item) => {
         const backdrop = getMediaImage(item, 'backdrop')
         const poster = getMediaImage(item, 'poster')
         return !!(backdrop || poster || item.backdrop_path || item.poster_path || item.bannerImage || item.coverImage)
       }
-      
+
       let filteredResults = Array.isArray(response) ? response.filter(hasImage) : []
-      
+
       // Sort by relevance using fuzzy matching
       filteredResults = filteredResults
         .map(item => {
           const title = (item.title || item.name || '').toLowerCase()
           const queryLower = searchQuery.toLowerCase()
-          
+
           let score = 0
           // Exact match gets highest score
           if (title === queryLower) score = 100
@@ -192,15 +175,15 @@ const Search = memo(() => {
           else if (title.startsWith(queryLower)) score = 80
           // Contains query
           else if (title.includes(queryLower)) score = 60
-          // Fuzzy match
+          // Fuzzy match (word boundary)
           else if (fuzzyMatch(item.title || item.name, searchQuery)) score = 40
           else score = 20
-          
+
           return { ...item, _relevanceScore: score }
         })
         .sort((a, b) => b._relevanceScore - a._relevanceScore)
         .map(({ _relevanceScore, ...item }) => item) // Remove score from final results
-      
+
       setResults(filteredResults)
     } catch (error) {
       console.error('Search error:', error)

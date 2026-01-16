@@ -21,24 +21,27 @@ export const listsService = {
       lists.map(async (item) => {
         const itemJson = item.toJSON()
         let needsUpdate = false
-        
+
         // Re-check mediaType if we have language/origin info or need to fetch details
         if (item.original_language || item.origin_country?.length > 0 || !itemJson.title) {
           let detectedType = item.mediaType
-          
+
           // If we have stored language info, use it to re-check
           if (item.original_language || item.origin_country?.length > 0) {
-            if (item.mediaType === 'tv' && item.original_language === 'ja') {
+            const isJapanese = item.original_language === 'ja' ||
+              (item.origin_country && (item.origin_country.includes('JP') || item.origin_country === 'JP'))
+
+            if (item.mediaType === 'tv' && isJapanese) {
               detectedType = 'anime'
             } else if (item.mediaType === 'manga') {
-              const isKorean = item.original_language === 'ko' || 
+              const isKorean = item.original_language === 'ko' ||
                 (item.origin_country && (item.origin_country.includes('KR') || item.origin_country === 'KR'))
               if (isKorean) {
                 detectedType = 'manhwa'
               }
             }
           }
-          
+
           // If title/description is missing or type needs correction, fetch from media service
           if (!itemJson.title && !itemJson.name || detectedType !== item.mediaType) {
             try {
@@ -47,21 +50,24 @@ export const listsService = {
               itemJson.name = mediaDetails.name || mediaDetails.title || itemJson.name || null
               itemJson.overview = mediaDetails.overview || mediaDetails.description || itemJson.overview || null
               itemJson.description = mediaDetails.description || mediaDetails.overview || itemJson.description || null
-              
+
               // Re-check type with fresh data
               const originalLanguage = mediaDetails.original_language || mediaDetails.originalLanguage
               const originCountry = mediaDetails.origin_country || mediaDetails.countryOfOrigin || []
-              
-              if (item.mediaType === 'tv' && originalLanguage === 'ja') {
+
+              const isJapanese = originalLanguage === 'ja' ||
+                (Array.isArray(originCountry) ? originCountry.includes('JP') : originCountry === 'JP')
+
+              if (item.mediaType === 'tv' && isJapanese) {
                 detectedType = 'anime'
               } else if (item.mediaType === 'manga') {
-                const isKorean = originalLanguage === 'ko' || 
+                const isKorean = originalLanguage === 'ko' ||
                   (Array.isArray(originCountry) ? originCountry.includes('KR') : originCountry === 'KR')
                 if (isKorean) {
                   detectedType = 'manhwa'
                 }
               }
-              
+
               // Update the database for future requests
               item.title = itemJson.title
               item.name = itemJson.name
@@ -71,7 +77,7 @@ export const listsService = {
                 item.mediaType = detectedType
                 itemJson.mediaType = detectedType
                 needsUpdate = true
-                
+
                 // Update UserProgress records with the new mediaType
                 const oldType = item.mediaType
                 await UserProgress.updateMany(
@@ -96,18 +102,18 @@ export const listsService = {
             // Update type if we detected a change from stored language info
             item.mediaType = detectedType
             itemJson.mediaType = detectedType
-            
+
             // Update UserProgress records with the new mediaType
             const oldType = item.mediaType
             await UserProgress.updateMany(
               { userId: item.userId.toString(), mediaId: item.mediaId, mediaType: oldType },
               { $set: { mediaType: detectedType } }
             )
-            
+
             await item.save()
           }
         }
-        
+
         return itemJson
       })
     )
@@ -134,13 +140,13 @@ export const listsService = {
       mediaId,
       mediaType,
     })
-    
+
     // If not found, try with other possible types (for backward compatibility)
     if (!existing) {
-      const possibleTypes = mediaType === 'manhwa' ? ['manga'] : 
-                           mediaType === 'manga' ? ['manhwa'] :
-                           mediaType === 'anime' ? ['tv'] :
-                           mediaType === 'tv' ? ['anime'] : []
+      const possibleTypes = mediaType === 'manhwa' ? ['manga'] :
+        mediaType === 'manga' ? ['manhwa'] :
+          mediaType === 'anime' ? ['tv'] :
+            mediaType === 'tv' ? ['anime'] : []
       for (const altType of possibleTypes) {
         existing = await UserList.findOne({
           userId,
@@ -166,65 +172,89 @@ export const listsService = {
       const mediaDetails = await mediaService.getDetails(mediaType, mediaId)
       posterUrl = mediaDetails.poster || mediaDetails.poster_path || null
       backdropUrl = mediaDetails.backdrop || mediaDetails.backdrop_path || null
-      
+
       // Get title/name and description
       title = mediaDetails.title || mediaDetails.name || null
       name = mediaDetails.name || mediaDetails.title || null
       overview = mediaDetails.overview || mediaDetails.description || null
       description = mediaDetails.description || mediaDetails.overview || null
-      
+
       // Get language and origin for type detection
       originalLanguage = mediaDetails.original_language || mediaDetails.originalLanguage || null
       originCountry = mediaDetails.origin_country || mediaDetails.countryOfOrigin || []
-      
+
       // Re-check media type based on language/origin (important for manhwa/anime detection)
       // IMPORTANT: Only TV series with Japanese become anime, NOT movies
       let detectedType = mediaType
-      if (mediaType === 'tv' && originalLanguage === 'ja') {
+      const isJapanese = originalLanguage === 'ja' ||
+        (Array.isArray(originCountry) ? originCountry.includes('JP') : originCountry === 'JP')
+
+      if (mediaType === 'tv' && isJapanese) {
         detectedType = 'anime'
       } else if (mediaType === 'movie') {
         // Movies always stay as movies, regardless of language
         detectedType = 'movie'
       } else if (mediaType === 'manga') {
-        const isKorean = originalLanguage === 'ko' || 
+        const isKorean = originalLanguage === 'ko' ||
           (Array.isArray(originCountry) ? originCountry.includes('KR') : originCountry === 'KR')
         if (isKorean) {
           detectedType = 'manhwa'
         }
       }
-      
+
       // Update mediaType if detection changed it
       if (detectedType !== mediaType) {
         mediaType = detectedType
       }
-      
+
       // Get total episodes for TV series/anime
       if (mediaType === 'tv' || mediaType === 'anime') {
         totalEpisodes = mediaDetails.totalEpisodes || mediaDetails.episodes || mediaDetails.number_of_episodes || null
       }
-      
-      
+
+      // Ensure poster/backdrop are set (check fallback fields)
+      if (!posterUrl) {
+        posterUrl = mediaDetails.poster ||
+          mediaDetails.poster_path ||
+          mediaDetails.coverImage?.large ||
+          mediaDetails.coverImage ||
+          null
+      }
+
+      if (!backdropUrl) {
+        backdropUrl = mediaDetails.backdrop ||
+          mediaDetails.backdrop_path ||
+          mediaDetails.bannerImage ||
+          mediaDetails.banner ||
+          null
+      }
+
+      // Ensure title is set
+      if (!title) title = mediaDetails.title || mediaDetails.name
+      if (!name) name = mediaDetails.name || mediaDetails.title
+
+
       // Initialize progress if it doesn't exist
       const existingProgress = await UserProgress.findOne({
         userId,
         mediaId,
         mediaType,
       })
-      
+
       if (!existingProgress) {
         const progressData = {
           userId,
           mediaId,
           mediaType,
         }
-        
+
         if (totalEpisodes) {
           progressData.currentEpisode = 0
           progressData.totalEpisodes = totalEpisodes
           await UserProgress.create(progressData)
         }
       }
-      
+
       // If adding to completed list, auto-mark all episodes/chapters
       if (listType === 'completed') {
         const progress = await UserProgress.findOne({
@@ -232,7 +262,7 @@ export const listsService = {
           mediaId,
           mediaType,
         })
-        
+
         if (progress) {
           // Mark all episodes as watched for TV/anime
           if ((mediaType === 'tv' || mediaType === 'anime') && totalEpisodes) {
@@ -254,7 +284,7 @@ export const listsService = {
           }
         }
       }
-      
+
       // Trigger achievement recalculation asynchronously (non-blocking)
       // Determine affected category for optimized recalculation
       let affectedCategory = null
@@ -267,7 +297,7 @@ export const listsService = {
       } else if (mediaType === 'manga' || mediaType === 'manhwa') {
         affectedCategory = 'manga'
       }
-      
+
       // Only recalculate affected category
       if (affectedCategory) {
         achievementsService.checkAchievements(userId, affectedCategory)
@@ -294,7 +324,7 @@ export const listsService = {
           mediaId,
           mediaType,
         })
-        
+
         if (existingWithNewType) {
           // Update the existing item with new type instead
           existingWithNewType.listType = listType
@@ -308,22 +338,22 @@ export const listsService = {
           if (description) existingWithNewType.description = description
           if (originalLanguage) existingWithNewType.original_language = originalLanguage
           if (originCountry) existingWithNewType.origin_country = Array.isArray(originCountry) ? originCountry : [originCountry]
-          
+
           // Delete the old item
           await existing.deleteOne()
           await existingWithNewType.save()
-          
+
           // Update UserProgress mediaType
           await UserProgress.updateMany(
             { userId, mediaId, mediaType: existing.mediaType },
             { $set: { mediaType } }
           )
-          
+
           return existingWithNewType.toJSON()
         } else {
           // Update mediaType on existing item
           existing.mediaType = mediaType
-          
+
           // Update UserProgress mediaType
           await UserProgress.updateMany(
             { userId, mediaId, mediaType: existing.mediaType },
@@ -331,7 +361,7 @@ export const listsService = {
           )
         }
       }
-      
+
       existing.listType = listType
       existing.rating = rating || existing.rating
       existing.notes = notes || existing.notes
@@ -378,7 +408,7 @@ export const listsService = {
     } else if (mediaType === 'manga' || mediaType === 'manhwa') {
       affectedCategory = 'manga'
     }
-    
+
     // Only recalculate affected category, not all achievements
     if (affectedCategory) {
       achievementsService.checkAchievements(userId, affectedCategory)
@@ -414,7 +444,7 @@ export const listsService = {
           mediaId: listItem.mediaId,
           mediaType: listItem.mediaType,
         })
-        
+
         // For TV series/anime: mark all episodes as watched
         if ((listItem.mediaType === 'tv' || listItem.mediaType === 'anime')) {
           if (progress) {
@@ -430,7 +460,7 @@ export const listsService = {
                 console.error('Error fetching total episodes:', error)
               }
             }
-            
+
             if (progress.totalEpisodes) {
               progress.currentEpisode = progress.totalEpisodes
               await progress.save()
@@ -454,7 +484,7 @@ export const listsService = {
             }
           }
         }
-        
+
       } catch (error) {
         console.error('Error auto-marking episodes/chapters on completion:', error)
       }
@@ -504,7 +534,7 @@ export const listsService = {
     } else if (listItem.mediaType === 'manga' || listItem.mediaType === 'manhwa') {
       affectedCategory = 'manga'
     }
-    
+
     // Only recalculate affected category
     if (affectedCategory) {
       achievementsService.checkAchievements(userId, affectedCategory)

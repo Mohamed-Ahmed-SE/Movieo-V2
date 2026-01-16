@@ -42,6 +42,7 @@ export const tmdbService = {
           backdrop: item.backdrop_path ? `${TMDB_IMAGE_BASE}/original${item.backdrop_path}` : null,
           releaseDate: item.release_date || item.first_air_date,
           rating: item.vote_average,
+          origin_country: item.origin_country || [],
         }))
 
       cache.set(cacheKey, results)
@@ -82,6 +83,7 @@ export const tmdbService = {
         vote_count: data.vote_count,
         runtime: data.runtime || data.episode_run_time?.[0] || null,
         original_language: data.original_language || null,
+        origin_country: data.origin_country || data.production_countries?.map(c => c.iso_3166_1) || [],
         status: data.status || null,
         genres: data.genres?.map((g) => g.name) || [],
         images: data.images?.backdrops?.map((img) => `${TMDB_IMAGE_BASE}/original${img.file_path}`) || [],
@@ -220,6 +222,7 @@ export const tmdbService = {
           releaseDate: item.release_date || item.first_air_date,
           rating: item.vote_average,
           genre_ids: item.genre_ids || [],
+          origin_country: item.origin_country || [],
         }))
 
       cache.set(cacheKey, results, 1800) // 30 min cache

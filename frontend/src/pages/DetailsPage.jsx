@@ -358,7 +358,7 @@ const DetailsPage = memo(() => {
                 mediaType: mediaItem.type?.toLowerCase() || type,
               }
             })
-            .filter(item => item && item.poster_path && item.poster_path !== null)
+            .filter(item => item && item.poster_path && item.poster_path !== null && String(item.id) !== String(media.id))
         }
       }
 
@@ -368,7 +368,7 @@ const DetailsPage = memo(() => {
           const trending = await mediaService.getTrending(type === 'manhwa' ? 'manga' : type)
           const trendingList = Array.isArray(trending) ? trending : (trending?.results || [])
           formatted = trendingList
-            .filter(item => item.id !== media.id) // Exclude current item
+            .filter(item => String(item.id) !== String(media.id)) // Exclude current item
             .slice(0, 20)
             .map(item => {
               const posterPath = item.poster_path || item.poster || item.coverImage?.large

@@ -40,11 +40,13 @@ A modern, full-stack application for tracking and managing movies, TV shows, ani
 
 ### Media Features
 
-- **Smart Type Detection**: Automatically detects Japanese TV series as anime, Korean manga as manhwa
+- **Smart Type Detection**: 
+  - **Anime**: Automatically detects Japanese TV series (language 'ja' or origin 'JP') and categorizes them as Anime (sourced from TMDB)
+  - **Manhwa**: Detects Korean manga (language 'ko' or origin 'KR') and categorizes them as Manhwa
 - **Character Information**: View detailed character information for anime and manga
 - **Episode/Chapter Tracking**: Track individual episodes and chapters with watched status
 - **Related Content**: Discover similar and recommended content
-- **Trending Content**: View trending content by category with real-time updates
+- **Trending Content**: View trending content by category with real-time updates (Anime sourced from TMDB)
 - **Image Galleries**: Browse posters, backdrops, and logos for all media types
 - **Logo Support**: Dynamic logo fetching and display in cards and hero sections
 - **Trailer Support**: Watch trailers directly in the app
@@ -134,8 +136,8 @@ A modern, full-stack application for tracking and managing movies, TV shows, ani
 
 ### External APIs
 
-- **TMDB API** - Movies and TV shows data, images, and metadata
-- **AniList GraphQL API** - Anime and manga data, characters, and detailed information
+- **TMDB API** - Primary source for Movies, TV Shows, and Anime (metadata, images, trending)
+- **AniList GraphQL API** - Dedicated source for Manga and Manhwa data (including characters and details)
 
 ### Development Tools
 
@@ -776,10 +778,15 @@ npm start
 
 #### Media Type Detection
 
-The app uses `getRealMediaType()` function to automatically detect:
-- **Anime**: TV series with Japanese language (`original_language === 'ja'`)
-- **Manhwa**: Korean manga (stored as `manga` but tracked separately)
-- **Movies**: All movies remain as movies regardless of language
+The app uses a unified `getRealMediaType()` helper (backend/frontend) to automatically detect:
+- **Anime**: Any TV series with Japanese language (`original_language === 'ja'`) OR origin country ('JP'). Sourced entirely from TMDB to ensure consistent metadata (images, titles).
+- **Manhwa**: Korean manga (`original_language === 'ko'` OR origin 'KR'). Sourced from AniList.
+- **Movies**: All movies remain as movies regardless of language (Anime Movies are tracked as Movies but count towards Anime stats if Japanese).
+
+#### Watchlist Management
+
+- **Strict Categorization**: Items added to the watchlist are strictly categorized (e.g., adding "Alice in Borderland" maps it to "Anime" automatically).
+- **Metadata Resilience**: Robust mapping ensures all items have valid titles and posters by checking multiple source fields (TMDB/AniList fallbacks).
 
 #### Image Customization
 

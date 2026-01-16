@@ -9,8 +9,11 @@ import { setCredentials } from './store/slices/authSlice'
 import Lenis from 'lenis'
 
 // Lazy load pages
-const Home = lazy(() => import('./pages/Home'))
-const LandingPage = lazy(() => import('./pages/LandingPage'))
+// Static imports for initial route performance and stability
+import Home from './pages/Home'
+import LandingPage from './pages/LandingPage'
+
+// Lazy load pages
 const Explore = lazy(() => import('./pages/Explore'))
 const MoviesExplore = lazy(() => import('./pages/explore/MoviesExplore'))
 const AnimeExplore = lazy(() => import('./pages/explore/AnimeExplore'))
