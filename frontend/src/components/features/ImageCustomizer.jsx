@@ -17,6 +17,8 @@ const ImageCustomizerModal = ({ open, onOpenChange, media, images = [], posters 
   const [selectedBackground, setSelectedBackground] = useState(null)
   const [selectedPoster, setSelectedPoster] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  const [visibleCount, setVisibleCount] = useState(14)
   const customizations = useSelector((state) => state.customization.customizations)
 
   const mediaId = media?.id || media?.mediaId
@@ -26,6 +28,7 @@ const ImageCustomizerModal = ({ open, onOpenChange, media, images = [], posters 
     if (open) {
       setStep('select')
       setSelectedType(null)
+      setVisibleCount(14)
       // Initialize with current values
       if (customizations[mediaId]) {
         setSelectedBackground(customizations[mediaId].customBackground || media.backdrop || media.bannerImage)
@@ -71,11 +74,17 @@ const ImageCustomizerModal = ({ open, onOpenChange, media, images = [], posters 
   const handleTypeSelect = (type) => {
     setSelectedType(type)
     setStep('choose')
+    setVisibleCount(14) // Reset visible count when switching types
   }
 
   const handleBack = () => {
     setStep('select')
     setSelectedType(null)
+    setVisibleCount(14) // Reset visible count when going back
+  }
+
+  const handleLoadMore = () => {
+    setVisibleCount(prev => prev + 14)
   }
 
   // Construct valid image URLs if they are partial paths
@@ -93,21 +102,21 @@ const ImageCustomizerModal = ({ open, onOpenChange, media, images = [], posters 
   // Get all available images from the images prop (which includes backdrops and posters from API)
   const imageBackdrops = images?.backdrops || images || []
   const imagePosters = images?.posters || posters || []
-  
+
   // Extract full paths from image objects - ensure they're strings
-  const backdropPaths = Array.isArray(imageBackdrops) 
+  const backdropPaths = Array.isArray(imageBackdrops)
     ? imageBackdrops.map(img => {
-        if (typeof img === 'string') return img
-        return img?.fullPath || img?.file_path || img?.filePath || null
-      }).filter(Boolean)
+      if (typeof img === 'string') return img
+      return img?.fullPath || img?.file_path || img?.filePath || null
+    }).filter(Boolean)
     : []
   const posterPaths = Array.isArray(imagePosters)
     ? imagePosters.map(img => {
-        if (typeof img === 'string') return img
-        return img?.fullPath || img?.file_path || img?.filePath || null
-      }).filter(Boolean)
+      if (typeof img === 'string') return img
+      return img?.fullPath || img?.file_path || img?.filePath || null
+    }).filter(Boolean)
     : []
-  
+
   // Helper to extract string from value (handles objects and strings)
   const extractPath = (value) => {
     if (!value) return null
@@ -117,7 +126,7 @@ const ImageCustomizerModal = ({ open, onOpenChange, media, images = [], posters 
     }
     return null
   }
-  
+
   // Deduplicate and combine - include media's own images and all API images
   // Ensure all values are strings
   const availableBackgrounds = [...new Set([
@@ -128,7 +137,7 @@ const ImageCustomizerModal = ({ open, onOpenChange, media, images = [], posters 
     (media.type === 'manga' || media.type === 'manhwa') ? extractPath(media.coverImage) : null,
     ...backdropPaths
   ])].filter(Boolean)
-  
+
   const availablePosters = [...new Set([
     extractPath(media.poster),
     extractPath(media.coverImage),
@@ -176,8 +185,8 @@ const ImageCustomizerModal = ({ open, onOpenChange, media, images = [], posters 
             <div className="flex items-center justify-between gap-2 sm:gap-4">
               <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
                 {step === 'choose' && (
-                  <button 
-                    onClick={handleBack} 
+                  <button
+                    onClick={handleBack}
                     className="text-zinc-400 hover:text-white px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-medium rounded-lg hover:bg-white/5 transition-all flex items-center gap-1 sm:gap-2 group flex-shrink-0"
                   >
                     <X className="h-3 w-3 sm:h-4 sm:w-4 rotate-45 group-hover:rotate-0 transition-transform" />
@@ -194,8 +203,8 @@ const ImageCustomizerModal = ({ open, onOpenChange, media, images = [], posters 
                   </Dialog.Description>
                 </div>
               </div>
-              <button 
-                onClick={() => onOpenChange(false)} 
+              <button
+                onClick={() => onOpenChange(false)}
                 className="text-zinc-400 hover:text-white p-1.5 sm:p-2 rounded-lg hover:bg-white/5 transition-all flex-shrink-0"
               >
                 <X className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -271,7 +280,7 @@ const ImageCustomizerModal = ({ open, onOpenChange, media, images = [], posters 
                     <p className="text-xs sm:text-sm text-zinc-400">Choose from available images below</p>
                   </div>
                   <div className="text-xs sm:text-sm text-zinc-500 flex-shrink-0">
-                    {selectedType === 'background' 
+                    {selectedType === 'background'
                       ? `${availableBackgrounds.length} available`
                       : `${availablePosters.length} available`
                     }
@@ -279,42 +288,53 @@ const ImageCustomizerModal = ({ open, onOpenChange, media, images = [], posters 
                 </div>
                 {selectedType === 'background' ? (
                   availableBackgrounds.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-                      {availableBackgrounds.map((img, idx) => {
-                        const isSelected = selectedBackground === img
-                        return (
-                          <button
-                            key={idx}
-                            onClick={() => setSelectedBackground(img)}
-                            className={`relative aspect-video rounded-xl overflow-hidden group transition-all duration-300 ${
-                              isSelected 
-                                ? 'ring-2 ring-primary ring-offset-2 ring-offset-zinc-950 scale-[1.02] shadow-lg shadow-primary/30' 
+                    <>
+                      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+                        {availableBackgrounds.slice(0, visibleCount).map((img, idx) => {
+                          const isSelected = selectedBackground === img
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => setSelectedBackground(img)}
+                              className={`relative aspect-video rounded-xl overflow-hidden group transition-all duration-300 ${isSelected
+                                ? 'ring-2 ring-primary ring-offset-2 ring-offset-zinc-950 scale-[1.02] shadow-lg shadow-primary/30'
                                 : 'hover:scale-[1.02] hover:ring-2 hover:ring-white/20'
-                            }`}
-                          >
-                            <img 
-                              src={getUrl(img)} 
-                              alt="background" 
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
-                              loading="lazy"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                            {isSelected && (
-                              <div className="absolute inset-0 bg-primary/30 flex items-center justify-center">
-                                <div className="bg-primary rounded-full p-2 shadow-lg">
-                                  <Check className="h-5 w-5 text-white" />
+                                }`}
+                            >
+                              <img
+                                src={getUrl(img)}
+                                alt="background"
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                loading="lazy"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                              {isSelected && (
+                                <div className="absolute inset-0 bg-primary/30 flex items-center justify-center">
+                                  <div className="bg-primary rounded-full p-2 shadow-lg">
+                                    <Check className="h-5 w-5 text-white" />
+                                  </div>
                                 </div>
-                              </div>
-                            )}
-                            {isSelected && (
-                              <div className="absolute top-2 left-2 bg-primary text-white text-xs font-bold px-2 py-1 rounded-md">
-                                Selected
-                              </div>
-                            )}
+                              )}
+                              {isSelected && (
+                                <div className="absolute top-2 left-2 bg-primary text-white text-xs font-bold px-2 py-1 rounded-md">
+                                  Selected
+                                </div>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      {availableBackgrounds.length > visibleCount && (
+                        <div className="flex justify-center mt-6">
+                          <button
+                            onClick={handleLoadMore}
+                            className="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-medium rounded-full transition-colors flex items-center gap-2"
+                          >
+                            Load More ({availableBackgrounds.length - visibleCount} remaining)
                           </button>
-                        )
-                      })}
-                    </div>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <div className="text-center py-16 bg-zinc-900/30 rounded-xl border border-white/10">
                       <ImageIcon className="h-12 w-12 text-zinc-600 mx-auto mb-3" />
@@ -323,42 +343,53 @@ const ImageCustomizerModal = ({ open, onOpenChange, media, images = [], posters 
                   )
                 ) : (
                   availablePosters.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
-                      {availablePosters.map((img, idx) => {
-                        const isSelected = selectedPoster === img
-                        return (
-                          <button
-                            key={idx}
-                            onClick={() => setSelectedPoster(img)}
-                            className={`relative aspect-[2/3] rounded-xl overflow-hidden group transition-all duration-300 ${
-                              isSelected 
-                                ? 'ring-2 ring-primary ring-offset-2 ring-offset-zinc-950 scale-[1.05] shadow-lg shadow-primary/30' 
+                    <>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
+                        {availablePosters.slice(0, visibleCount).map((img, idx) => {
+                          const isSelected = selectedPoster === img
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => setSelectedPoster(img)}
+                              className={`relative aspect-[2/3] rounded-xl overflow-hidden group transition-all duration-300 ${isSelected
+                                ? 'ring-2 ring-primary ring-offset-2 ring-offset-zinc-950 scale-[1.05] shadow-lg shadow-primary/30'
                                 : 'hover:scale-[1.03] hover:ring-2 hover:ring-white/20'
-                            }`}
-                          >
-                            <img 
-                              src={getUrl(img)} 
-                              alt="poster" 
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
-                              loading="lazy"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                            {isSelected && (
-                              <div className="absolute inset-0 bg-primary/30 flex items-center justify-center">
-                                <div className="bg-primary rounded-full p-2 shadow-lg">
-                                  <Check className="h-5 w-5 text-white" />
+                                }`}
+                            >
+                              <img
+                                src={getUrl(img)}
+                                alt="poster"
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                loading="lazy"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                              {isSelected && (
+                                <div className="absolute inset-0 bg-primary/30 flex items-center justify-center">
+                                  <div className="bg-primary rounded-full p-2 shadow-lg">
+                                    <Check className="h-5 w-5 text-white" />
+                                  </div>
                                 </div>
-                              </div>
-                            )}
-                            {isSelected && (
-                              <div className="absolute top-2 left-2 bg-primary text-white text-xs font-bold px-2 py-1 rounded-md">
-                                Selected
-                              </div>
-                            )}
+                              )}
+                              {isSelected && (
+                                <div className="absolute top-2 left-2 bg-primary text-white text-xs font-bold px-2 py-1 rounded-md">
+                                  Selected
+                                </div>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+                      {availablePosters.length > visibleCount && (
+                        <div className="flex justify-center mt-6">
+                          <button
+                            onClick={handleLoadMore}
+                            className="px-6 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-medium rounded-full transition-colors flex items-center gap-2"
+                          >
+                            Load More ({availablePosters.length - visibleCount} remaining)
                           </button>
-                        )
-                      })}
-                    </div>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <div className="text-center py-16 bg-zinc-900/30 rounded-xl border border-white/10">
                       <Film className="h-12 w-12 text-zinc-600 mx-auto mb-3" />
@@ -372,7 +403,7 @@ const ImageCustomizerModal = ({ open, onOpenChange, media, images = [], posters 
 
           {step === 'choose' && (
             <div className="p-3 sm:p-4 md:p-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-0 bg-gradient-to-r from-zinc-900/50 to-transparent backdrop-blur-sm">
-              <button 
+              <button
                 onClick={handleBack}
                 className="px-4 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-zinc-300 hover:text-white border border-white/10 hover:border-white/20 rounded-lg transition-all hover:bg-white/5"
               >

@@ -328,7 +328,7 @@ const DetailsPage = memo(() => {
               mediaType: rec.mediaType || rec.type || type,
             }
           })
-          .filter(item => item && item.poster_path && item.poster_path !== null)
+          .filter(item => item && item.poster_path && item.poster_path !== null && String(item.id) !== String(media.id))
       }
 
       // For AniList content, use relations as fallback
@@ -508,7 +508,7 @@ const DetailsPage = memo(() => {
               )}
 
               {/* Episodes Section - Show for TV (with seasons) and anime (with totalEpisodes) */}
-              {((media.type === 'tv' || type === 'tv') && media?.seasons && media.seasons.length > 0) && (
+              {((media.type === 'tv' || type === 'tv') && type !== 'anime' && media.type !== 'anime' && media?.seasons && media.seasons.length > 0) && (
                 <EpisodesSection
                   episodes={episodes}
                   loading={loadingEpisodes}
